@@ -1,5 +1,5 @@
 """
-Implementación de la red neuronal propuesta en 
+Implementación en Pytorch Lightning de la red neuronal propuesta en 
 
     "Real-Time Guitar Amplifier Emulation with Deep Learning" de Wright, et al., 2020
     https://www.mdpi.com/2076-3417/10/3/766
@@ -9,7 +9,6 @@ Red neuronal basada en la arquitectura de red neuronal propuesta en
     https://arxiv.org/abs/1609.03499
 """
 
-from pytorch_lightning.utilities.types import TRAIN_DATALOADERS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -191,24 +190,32 @@ class AmpEmulatorModel(pl.LightningModule):
     "Real-Time Guitar Amplifier Emulation with Deep Learning" de Wright, et al., 2020.
     """
     
-    def __init__(self):
+    def __init__(self, num_channels=4, dilation_depth=9, dilation_repeat=2, kernel_size=3, learning_rate=3e-3):
+        """
+        Constructor de la clase.
+        """
         super(AmpEmulatorModel, self).__init__()
         
         self.wavenet = WaveNet(
-                        num_channels=4, 
-                        dilation_depth=9,
-                        dilation_repeat=2,
-                        kernel_size=3)
+            num_channels=num_channels,
+            dilation_depth=dilation_depth,
+            dilation_repeat=dilation_repeat,
+            kernel_size=kernel_size
+        )
         
         self.learning_rate = 3e-3
         
     def __pre_emphasis_filter(x, alpha=0.95):
         """
         Método que implementa el filtro de pre-énfasis de paso alto de primer orden.
+
+        Args:
+            x (torch.Tensor): Tensor con las señales de audio.
+            alpha (float): Coeficiente de pre-énfasis. Por defecto 0.95.
         """
         return torch.cat([x[:, 0:1], x[:, 1:] - alpha * x[:, :-1]], dim=1)
 
-    def __ESR(y, y_hat):
+    def __ESR(self, y, y_hat):
         """
         Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) propuesta en el paper.
 
@@ -216,16 +223,23 @@ class AmpEmulatorModel(pl.LightningModule):
             y (torch.Tensor): Tensor con las señales de audio originales.
             y_hat (torch.Tensor): Tensor con las señales de audio generadas por el modelo.
         """
+        y, y_hat = self.__pre_emphasis_filter(y), self.__pre_emphasis_filter(y_hat)
         return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
 
     def forward(self, x):
+        """
+        Método que implementa el paso hacia adelante de la red neuronal.
+        """
         return self.wavenet(x)
     
     # Métodos overriden de Lightning.LightningModule
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch):
         """
         Método del bucle de entrenamiento. Implementa el paso hacia adelante de la red neuronal y el cálculo de la pérdida.
+
+        Args:
+            batch: lote de datos de entrada y salida.
         """
         x, y = batch
         y_hat = self.forward(x)
@@ -233,9 +247,12 @@ class AmpEmulatorModel(pl.LightningModule):
         self.log('train_loss', loss)
         return loss
     
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch):
         """
         Método del bucle de validación. Implementa el paso hacia adelante de la red neuronal y el cálculo de la pérdida.
+
+        Args:
+            batch: lote de datos de entrada y salida.
         """
         x, y = batch
         y_hat = self.forward(x)

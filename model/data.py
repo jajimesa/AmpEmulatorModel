@@ -10,8 +10,15 @@ import numpy as np
 Implementación en Pytorch Lightning del módulo de datos.
 Este módulo se encarga de cargar los datos de entrenamiento y validación, y de construir los dataloaders.
 
-    x es el tensor de datos de entrada, que es audio en formato wav con el sonido limpio de la guitarra.
-    y es el tensor de datos de salida, que es audio en formato wav con el sonido de la guitarra distorsionado.
+Consideraciones:
+    1. Los archivos de entrada y salida deben ser archivos .wav con la misma tasa de muestreo. 
+    2. Se leen como arrays de numpy, y si no tienen la misma longitud, se truncan tanto como el archivo más pequeño.
+    3. Si no son mono (son estéreo), se seleccionará el primer canal estéreo (L). 
+    4. Los datos son transformados de int16 a float32 para que el modelo pueda funcionar en un plugin VST3.
+    5. Los datos se normalizan con la norma del supremo (norma infinito).
+    6. Se dividen en tres partes: 60% para entrenamiento, 20% para validación y 20% para test.
+    7. Los datos de entrada son estandarizados con media 0 y desviación estándar 1.
+    8. Una vez manipulados los datos, se construyen los TensorDataset de entrenamiento, validación y test.
 """
 
 class AmpEmulatorDataModule(pl.LightningDataModule):
@@ -33,6 +40,12 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         self.output_file = output_file
         self.__sample_time = sample_time
 
+        # Datos de entrenamiento, validación y test
+        self.__data = {}
+        self.__train_ds = None
+        self.__valid_ds = None
+        self.__test_ds = None   
+
     # Métodos overriden de Lightning.LightningDataModule
 
     def __normalize(self, data):
@@ -52,9 +65,10 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         Args:
             x (np.array): Array de numpy a dividir.
         """
-        return np.split(x, [int(len(x) * 0.6), int(len(x) * 0.8)])
+        train, valid, test = np.split(x, [int(len(x) * 0.6), int(len(x) * 0.8)])
+        return train, valid, test
 
-    def setup(self, stage: str):
+    def setup(self, stage=None):
         """
         Método overriden que se encarga de cargar los datos y de manipularlos para que estén en el formato
         correcto para ser utilizados.
@@ -62,7 +76,7 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         # Cargamos los ficheros .wav, nos devuelve la tasa de muestreo y los datos en formato numpy array
         in_rate, in_data = wavfile.read(self.input_file)
         out_rate, out_data = wavfile.read(self.output_file)
-        assert(in_rate == out_rate, "Las tasas de muestreo de in_rate y out_rate deben ser iguales.")
+        assert in_rate == out_rate, "Las tasas de muestreo de in_rate y out_rate deben ser iguales."
 
         # Si los datos no tienen la misma longitud, los truncamos
         if len(in_data) < len(out_data):
@@ -97,7 +111,6 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         x = in_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
         y = out_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
 
-        self.__data = {}
         self.__data["x_train"], self.__data["x_valid"], self.__data["x_test"] = self.__split(x)
         self.__data["y_train"], self.__data["y_valid"], self.__data["y_test"] = self.__split(y)
         self.__data["mean"], self.__data["std"] = self.__data["x_train"].mean(), self.__data["x_train"].std()
@@ -107,7 +120,7 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         self.__data["x_valid"] = (self.__data["x_valid"] - self.__data["mean"]) / self.__data["std"]
         self.__data["x_test"] = (self.__data["x_test"] - self.__data["mean"]) / self.__data["std"]
 
-    def __build_dataset(x, y):
+    def __build_dataset(self, x, y):
         """
         Función auxiliar que construye un TensorDataset a partir de los tensores x e y, que pueden ser parejas
         de tensores de entrenamiento o de validación.

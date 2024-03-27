@@ -32,14 +32,14 @@ class DilatedCausalConv1d(torch.nn.Conv1d):
             groups (int): Número de grupos en los que se dividen las entradas y salidas. Por defecto 1.
             bias (bool): Indica si se incluye un término de sesgo en la convolución. Por defecto True.
         """
-        self.__causal_padding = (kernel_size - 1) * dilation   # Padding que garantiza que la convolución sea causal.
+        self.__dilated_padding = (kernel_size - 1) * dilation   # Padding que garantiza que la convolución sea causal.
 
         super(DilatedCausalConv1d, self).__init__(
             in_channels,
             out_channels,
             kernel_size,
             stride=stride,
-            padding=self.__causal_padding,
+            padding=self.__dilated_padding,
             dilation=dilation,
             groups=groups,
             bias=bias
@@ -127,7 +127,7 @@ class WaveNet(nn.Module):
                 dilations.append(2**j)
         return dilations
     
-    def __convolution_stack(in_channels, out_channels, kernel_size, dilations):
+    def __convolution_stack(self, in_channels, out_channels, kernel_size, dilations):
         """
         Función auxiliar que construye una pila de capas de convolución. Devuelve una pila
         de capas de convolución de tamaño igual a la longitud de la lista dilations.
@@ -139,7 +139,7 @@ class WaveNet(nn.Module):
             dilation_array (list): Lista de tasas de dilatación de las convoluciones.
         """
         pila = nn.ModuleList()
-        for d in enumerate(dilations):
+        for v, d in enumerate(dilations):   # dilations es un vector de vectores v, con dilataciones d
             pila.append(
                 DilatedCausalConv1d(
                     in_channels,
@@ -204,27 +204,6 @@ class AmpEmulatorModel(pl.LightningModule):
         )
         
         self.learning_rate = 3e-3
-        
-    def __pre_emphasis_filter(x, alpha=0.95):
-        """
-        Método que implementa el filtro de pre-énfasis de paso alto de primer orden.
-
-        Args:
-            x (torch.Tensor): Tensor con las señales de audio.
-            alpha (float): Coeficiente de pre-énfasis. Por defecto 0.95.
-        """
-        return torch.cat([x[:, 0:1], x[:, 1:] - alpha * x[:, :-1]], dim=1)
-
-    def __ESR(self, y, y_hat):
-        """
-        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) propuesta en el paper.
-
-        Args:
-            y (torch.Tensor): Tensor con las señales de audio originales.
-            y_hat (torch.Tensor): Tensor con las señales de audio generadas por el modelo.
-        """
-        y, y_hat = self.__pre_emphasis_filter(y), self.__pre_emphasis_filter(y_hat)
-        return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
 
     def forward(self, x):
         """
@@ -232,7 +211,28 @@ class AmpEmulatorModel(pl.LightningModule):
         """
         return self.wavenet(x)
     
-    # Métodos overriden de Lightning.LightningModule
+    def __pre_emphasis_filter(self, x, alpha=0.95):
+        """
+        Método que implementa el filtro de pre-énfasis de paso alto de primer orden.
+
+        Args:
+            x (torch.Tensor): Tensor con las señales de audio.
+            alpha (float): Coeficiente de pre-énfasis. Por defecto 0.95.
+        """
+        return torch.cat([x[:, :, 0:1], x[:, :, 1:] - alpha * x[:, :, :-1]], dim=2)
+
+    def __ESR(self, y, y_hat):
+        """
+        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) propuesta en el paper.
+        
+        Args:
+            y (torch.Tensor): Tensor con las señales de audio originales.
+            y_hat (torch.Tensor): Tensor con las señales de audio generadas por el modelo.
+        """
+        y, y_hat = self.__pre_emphasis_filter(y), self.__pre_emphasis_filter(y_hat)
+        return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
+
+        # Métodos overriden de Lightning.LightningModule
 
     def training_step(self, batch):
         """
@@ -246,7 +246,7 @@ class AmpEmulatorModel(pl.LightningModule):
         loss = self.__ESR(y[:, :, -y_hat.size(2) :], y_hat).mean()
         self.log('train_loss', loss)
         return loss
-    
+        
     def validation_step(self, batch):
         """
         Método del bucle de validación. Implementa el paso hacia adelante de la red neuronal y el cálculo de la pérdida.

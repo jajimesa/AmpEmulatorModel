@@ -9,6 +9,7 @@ Red neuronal basada en la arquitectura de red neuronal propuesta en
     https://arxiv.org/abs/1609.03499
 """
 
+from pytorch_lightning.utilities.types import TRAIN_DATALOADERS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -192,14 +193,58 @@ class AmpEmulatorModel(pl.LightningModule):
     
     def __init__(self):
         super(AmpEmulatorModel, self).__init__()
+        
         self.wavenet = WaveNet(
                         num_channels=4, 
                         dilation_depth=9,
                         dilation_repeat=2,
                         kernel_size=3)
         
+        self.learning_rate = 3e-3
+        
+    def __pre_emphasis_filter(x, alpha=0.95):
+        """
+        Método que implementa el filtro de pre-énfasis de paso alto de primer orden.
+        """
+        return torch.cat([x[:, 0:1], x[:, 1:] - alpha * x[:, :-1]], dim=1)
+
+    def __ESR(y, y_hat):
+        """
+        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) propuesta en el paper.
+
+        Args:
+            y (torch.Tensor): Tensor con las señales de audio originales.
+            y_hat (torch.Tensor): Tensor con las señales de audio generadas por el modelo.
+        """
+        return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
+
     def forward(self, x):
         return self.wavenet(x)
     
-    # TODO Implementar el resto una vez decidamos cómo avanzar con el modelo
+    # Métodos overriden de Lightning.LightningModule
 
+    def training_step(self, batch, batch_idx):
+        """
+        Método del bucle de entrenamiento. Implementa el paso hacia adelante de la red neuronal y el cálculo de la pérdida.
+        """
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.__ESR(y[:, :, -y_hat.size(2) :], y_hat).mean()
+        self.log('train_loss', loss)
+        return loss
+    
+    def validation_step(self, batch, batch_idx):
+        """
+        Método del bucle de validación. Implementa el paso hacia adelante de la red neuronal y el cálculo de la pérdida.
+        """
+        x, y = batch
+        y_hat = self.forward(x)
+        loss = self.__ESR(y[:, :, -y_hat.size(2) :], y_hat).mean()
+        self.log('val_loss', loss)
+        return loss
+    
+    def configure_optimizers(self):
+        """ 
+        Método overriden que devuelve el optimizador del modelo, en el caso del paper, Adam.
+        """
+        return torch.optim.Adam(self.wavenet.parameters(), lr=self.learning_rate)

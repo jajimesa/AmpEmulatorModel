@@ -5,6 +5,7 @@ Implementación en Pytorch Lightning de la red neuronal propuesta en
     https://www.mdpi.com/2076-3417/10/3/766
 
 Red neuronal basada en la arquitectura de red neuronal propuesta en 
+    
     "WaveNet: A Generative Model for Raw Audio" de van den Oord, et al., 2016
     https://arxiv.org/abs/1609.03499
 """
@@ -28,7 +29,7 @@ class DilatedCausalConv1d(torch.nn.Conv1d):
             out_channels (int): Número de canales de salida.
             kernel_size (int): Tamaño del kernel de la convolución. Por defecto 2.
             stride (int): Tamaño del paso de la convolución.
-            dilation (int): Tasa de dilatación de la convolución. Por defecto 1, pero permite implementar convoluciones dilatadas.
+            dilation (int): Tasa de dilatación de la convolución. Por defecto 1 (sin dilatación).
             groups (int): Número de grupos en los que se dividen las entradas y salidas. Por defecto 1.
             bias (bool): Indica si se incluye un término de sesgo en la convolución. Por defecto True.
         """
@@ -48,7 +49,9 @@ class DilatedCausalConv1d(torch.nn.Conv1d):
     def forward(self, input):
         """
         Método que implementa el paso hacia adelante de la capa de convolución.            
-        La salida es causal: solo depende de las entradas en pasos de tiempo anteriores o iguales al instante actual.
+        
+        Args:
+            input (torch.Tensor): Tensor de entrada a la capa de convolución.
         """
         output = super(DilatedCausalConv1d, self).forward(input)
 
@@ -59,7 +62,8 @@ class DilatedCausalConv1d(torch.nn.Conv1d):
     
 class WaveNet(nn.Module):
     """
-    Clase que implementa la red neuronal propuesta en "Real-Time Guitar Amplifier Emulation with Deep Learning" de Wright, et al., 2020.
+    Clase que implementa la red neuronal propuesta en 
+    "Real-Time Guitar Amplifier Emulation with Deep Learning" de Wright, et al., 2020.
     """
     
     def __init__(self, num_channels, dilation_depth, dilation_repeat, kernel_size=2):
@@ -113,13 +117,16 @@ class WaveNet(nn.Module):
         Método que construye la lista de tasas de dilatación.
 
         Ejemplos: 
-            depth=3, repeat=2 -> [1, 2, 4, 1, 2, 4]
-            depth=2, repeat=3 -> [1, 2, 1, 2, 1, 2]
-            depth=9, repeat=2 -> [1, 2, ... , 128, 256, 1, 2, ... , 128, 256]
+            depth=3, repeat=2 -> [[1, 2, 4], [1, 2, 4]]
+            depth=2, repeat=3 -> [[1, 2], [1, 2], [1, 2]]
+            depth=9, repeat=2 -> [[1, 2, ... , 128, 256], [1, 2, ... , 128, 256]]
 
         Args:
             dilation_depth (int): Máxima potencia de 2 que tendrá la tasa de dilatación.
             dilations_repeat (int): Número de veces que se repite el rango de potencias de 2.
+
+        Returns:
+            dilations (list): Lista de listas de tasas de dilatación.
         """
         dilations = []
         for i in range(dilations_repeat):
@@ -137,9 +144,12 @@ class WaveNet(nn.Module):
             out_channels (int): Número de canales de salida.
             kernel_size (int): Tamaño del kernel de la convolución.
             dilation_array (list): Lista de tasas de dilatación de las convoluciones.
+        
+        Returns:
+            pila (nn.ModuleList): Pila de capas de convolución.
         """
         pila = nn.ModuleList()
-        for v, d in enumerate(dilations):   # dilations es un vector de vectores v, con dilataciones d
+        for v, d in enumerate(dilations):   # dilations es una lista de listas v, con dilataciones d
             pila.append(
                 DilatedCausalConv1d(
                     in_channels,
@@ -153,6 +163,9 @@ class WaveNet(nn.Module):
     def receptive_field(self):
         """
         Método que calcula el campo receptivo de la red neuronal.
+
+        Returns:
+            receptive_field (int): Tamaño del receptive field de la red neuronal.
         """
         return self.dilation_repeat * (2 ** self.dilation_depth - 1) * (self.kernel_size - 1) + 1   
 
@@ -161,6 +174,12 @@ class WaveNet(nn.Module):
         Método que implementa el paso hacia adelante de la red neuronal. Los datos de entrada "x"
         atraviesan la capa de entrada, el bloque residual (tantas veces como capas convolucionales)
         y el mixer lineal para producir el output.
+
+        Args:
+            x (torch.Tensor): Tensor de entrada a la red neuronal.
+
+        Returns:
+            out (torch.Tensor): Tensor de salida de la red neuronal.
         """
 
         out = self.input_layer(x)
@@ -203,7 +222,7 @@ class AmpEmulatorModel(pl.LightningModule):
             kernel_size=kernel_size
         )
         
-        self.learning_rate = 3e-3
+        self.learning_rate = learning_rate
 
     def forward(self, x):
         """
@@ -218,16 +237,22 @@ class AmpEmulatorModel(pl.LightningModule):
         Args:
             x (torch.Tensor): Tensor con las señales de audio.
             alpha (float): Coeficiente de pre-énfasis. Por defecto 0.95.
+
+        Returns:
+            out (torch.Tensor): Tensor con las señales de audio enfatizadas en el rango de frecuencias medias y altas.
         """
         return torch.cat([x[:, :, 0:1], x[:, :, 1:] - alpha * x[:, :, :-1]], dim=2)
 
     def __ESR(self, y, y_hat):
         """
-        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) propuesta en el paper.
+        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio).
         
         Args:
             y (torch.Tensor): Tensor con las señales de audio originales.
             y_hat (torch.Tensor): Tensor con las señales de audio generadas por el modelo.
+
+        Returns:
+            ESR (torch.Tensor): Tensor con el valor de la función de pérdida ESR.
         """
         y, y_hat = self.__pre_emphasis_filter(y), self.__pre_emphasis_filter(y_hat)
         return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
@@ -263,5 +288,8 @@ class AmpEmulatorModel(pl.LightningModule):
     def configure_optimizers(self):
         """ 
         Método overriden que devuelve el optimizador del modelo, en el caso del paper, Adam.
+
+        Returns:
+            optimizer (torch.optim.Adam): Optimizador Adam.
         """
         return torch.optim.Adam(self.wavenet.parameters(), lr=self.learning_rate)

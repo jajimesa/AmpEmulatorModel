@@ -14,7 +14,8 @@ los datos de entrenamiento y validación, y de construir los dataloaders.
 class AmpEmulatorDataModule(pl.LightningDataModule):
 
     def __init__(
-        self, batch_size=64, 
+        self,
+        batch_size=64, 
         num_workers=4,
         input_file="data/input.wav",
         output_file="data/output.wav",
@@ -41,7 +42,7 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         self.mu_law_companding = mu_law_companding
 
         # Datos de entrenamiento, validación y test
-        self.__data = {}
+        self.data = {}
         self.__train_ds = None
         self.__valid_ds = None
         self.__test_ds = None   
@@ -124,6 +125,7 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         # Cargamos los ficheros .wav, nos devuelve la tasa de muestreo y los datos en formato numpy array
         in_rate, in_data = wavfile.read(self.input_file)
         out_rate, out_data = wavfile.read(self.output_file)
+        assert in_rate == 44100, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
         assert in_rate == out_rate, "Las tasas de muestreo de in_rate y out_rate deben ser iguales."
 
         # Si los datos no tienen la misma longitud, los truncamos
@@ -148,10 +150,11 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         if out_data.dtype == np.int16:
             out_data = out_data.astype(np.float32) / 32767
 
-        # Normalizamos los datos
+        # Calculamos la longitud de la muestra y de los datos
         sample_size = int(in_rate * self.sample_time)
         data_length = len(in_data) - len(in_data) % sample_size
 
+        # Normalizamos los datos
         in_data = self.__normalize(in_data)
         out_data = self.__normalize(out_data)
 
@@ -160,22 +163,22 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         y = out_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
 
         # Dividimos los datos en entrenamiento, validación y test; y los metemos en un diccionario
-        self.__data["x_train"], self.__data["x_valid"], self.__data["x_test"] = self.__split(x)
-        self.__data["y_train"], self.__data["y_valid"], self.__data["y_test"] = self.__split(y)
-        self.__data["mean"], self.__data["std"] = self.__data["x_train"].mean(), self.__data["x_train"].std()
+        self.data["x_train"], self.data["x_valid"], self.data["x_test"] = self.__split(x)
+        self.data["y_train"], self.data["y_valid"], self.data["y_test"] = self.__split(y)
+        self.data["mean"], self.data["std"] = self.data["x_train"].mean(), self.data["x_train"].std()
 
         # Estandarizamos los datos con media 0 y desviación estándar 1
-        self.__data["x_train"] = (self.__data["x_train"] - self.__data["mean"]) / self.__data["std"]
-        self.__data["x_valid"] = (self.__data["x_valid"] - self.__data["mean"]) / self.__data["std"]
-        self.__data["x_test"] = (self.__data["x_test"] - self.__data["mean"]) / self.__data["std"]
+        self.data["x_train"] = (self.data["x_train"] - self.data["mean"]) / self.data["std"]
+        self.data["x_valid"] = (self.data["x_valid"] - self.data["mean"]) / self.data["std"]
+        self.data["x_test"] = (self.data["x_test"] - self.data["mean"]) / self.data["std"]
 
     def prepare_data(self):
         """
         Método que se encarga de construir los TensorDataSet de entrenamiento, validación y test.
         """
-        self.__train_ds = self.__build_dataset(self.__data["x_train"], self.__data["y_train"])
-        self.__valid_ds = self.__build_dataset(self.__data["x_valid"], self.__data["y_valid"])
-        self.__test_ds = self.__build_dataset(self.__data["x_test"], self.__data["y_test"])
+        self.__train_ds = self.__build_dataset(self.data["x_train"], self.data["y_train"])
+        self.__valid_ds = self.__build_dataset(self.data["x_valid"], self.data["y_valid"])
+        self.__test_ds = self.__build_dataset(self.data["x_test"], self.data["y_test"])
 
     def train_dataloader(self):
         """
@@ -185,9 +188,10 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             DataLoader de entrenamiento.
         """
         return DataLoader(
-            self.__train_ds,
+            dataset = self.__train_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,    # Mantiene la pool de hilos trabajadores abierta entre epochs para acelerar la carga de datos
             shuffle=True)
     
     def val_dataloader(self):
@@ -198,9 +202,10 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             DataLoader de validación.
         """
         return DataLoader(
-            self.__valid_ds,
+            dataset = self.__valid_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,    # Mantiene la pool de hilos
             shuffle=False)
     
     def test_dataloader(self):
@@ -211,7 +216,8 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             DataLoader de test.
         """
         return DataLoader(
-            self.__test_ds,
+            dataset = self.__test_ds,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,    # Mantiene la pool de hilos
             shuffle=False)

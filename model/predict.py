@@ -18,6 +18,32 @@ def predict():
     dataset = AmpEmulatorDataModule()
     dataset.setup()
     dataset.prepare_data()
+    x = dataset.prepare_for_inference("predict")
+
+    # Hacemos la predicción
+    with torch.no_grad():
+        pred = []
+        batches = x.shape[0] // dataset.batch_size
+
+        for batch in tqdm(np.array_split(x, batches)):    # Mostramos una barra de progreso
+            pred.append(model(torch.from_numpy(batch)).numpy())
+
+        pred = np.concatenate(pred)
+        pred = pred[:, :, -x.shape[2] :]
+
+    # Guardamos la predicción como un .wav
+    wavfile.write("models/pred.wav", 44100, pred)
+
+if __name__ == "__main__":
+    #predict()
+
+    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt")
+    model.eval()    # Ponemos el modelo en modo de evaluación
+
+    # Cargamos los datos
+    dataset = AmpEmulatorDataModule()
+    dataset.setup()
+    dataset.prepare_data()
 
     data = dataset.data
 
@@ -36,19 +62,6 @@ def predict():
     in_data = (in_data - mean) / std
 
     # Concatenamos las samples entre sí
-    """
-    Ejemplo:
-
-        in_data = np.array([[1, 2, 3],
-                            [4, 5, 6],
-                            [7, 8, 9]])
-    prev_sample = np.array([[0, 0, 0],
-                            [1, 2, 3],
-                            [4, 5, 6]])
-    pad_in_data = np.array([[[0, 0, 0, 1, 2, 3],
-                             [0, 0, 0, 4, 5, 6],
-                             [0, 0, 0, 7, 8, 9]]])                    
-    """
     prev_sample = np.concatenate((np.zeros_like(in_data[0:1]), in_data[:-1]), axis=0)
     pad_in_data = np.concatenate((prev_sample, in_data), axis=2)
 
@@ -65,6 +78,3 @@ def predict():
 
     # Guardamos la predicción como un .wav
     wavfile.write("models/pred.wav", in_rate, pred)
-
-if __name__ == "__main__":
-    predict()

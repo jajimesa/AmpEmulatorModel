@@ -221,3 +221,59 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True,    # Mantiene la pool de hilos
             shuffle=False)
+    
+    def prepare_for_inference(self, inference_type="predict"):
+        """
+        Método que prepara los datos para hacer inferencia con el modelo. El dataset ha tenido que haber
+        sido cargado previamente (setup y prepare_data han debido ser llamados).
+
+        Args:
+            inference_type: Tipo de inferencia a realizar. Puede ser 'predict' o 'test'.
+        Returns:
+            pad_x: Datos preparados para hacer inferencia con el modelo.
+        """
+
+        # Comprobamos que el parámetro inference_type sea correcto
+        if not isinstance(inference_type, str) and inference_type not in ['predict', 'test']:
+            raise ValueError("El parámetro 'inference_type' solo puede ser 'predict' o 'test'.")
+
+        # Cargamos los datos
+        data = self.data
+        mean, std = data["mean"], data["std"]
+
+        # Determinamos los datos "x" a utilizar en función del tipo de inferencia
+        x = None
+        if inference_type == "predict":
+            # Cargamos el archivo .wav
+            in_rate, in_data = wavfile.read(self.input_file)
+            assert in_rate == 44100, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
+            sample_size = int(in_rate * self.sample_time)
+            data_length = len(in_data) - len(in_data) % sample_size
+            # Dividimos los datos de entrada en muestras de tamaño sample_size
+            in_data = in_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
+
+            # Estandarizamos los datos con media 0 y desviación estándar 1 
+            in_data = (in_data - mean) / std
+            x = in_data
+
+        elif inference_type == "test":
+            x = data["x_test"]
+
+        # Concatenamos las samples entre sí y añadimos un padding de ceros
+        """
+        Ejemplo:
+
+        x = np.array([[1, 2, 3],
+                      [4, 5, 6],
+                      [7, 8, 9]])
+        prev_sample = np.array([[0, 0, 0],
+                                [1, 2, 3],
+                                [4, 5, 6]])
+        pad_x = np.array([[[0, 0, 0, 1, 2, 3],
+                           [0, 0, 0, 4, 5, 6],
+                           [0, 0, 0, 7, 8, 9]]])                    
+        """
+        prev_sample = np.concatenate((np.zeros_like(x[0:1]), x[:-1]), axis=0)
+        pad_x = np.concatenate((prev_sample, x), axis=2)
+
+        return pad_x

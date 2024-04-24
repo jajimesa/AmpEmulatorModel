@@ -9,18 +9,23 @@ import numpy as np
 """
 Implementación en Pytorch Lightning del módulo de datos, que se encarga de cargar
 los datos de entrenamiento y validación, y de construir los dataloaders.
+
+Tratamiento de los datos basado en el repositorio
+    
+    "PedalNetRT" de GuitarML, 2020
+    https://github.com/GuitarML/PedalNetRT
 """
 
 class AmpEmulatorDataModule(pl.LightningDataModule):
 
     def __init__(
         self,
-        batch_size=64, 
-        num_workers=4,
-        input_file="data/input.wav",
-        output_file="data/output.wav",
-        sample_time=100e-3,
-        mu_law_companding=False
+        batch_size = 64, 
+        num_workers = 4,
+        input_file = "data/input.wav",
+        output_file = "data/output.wav",
+        in_rate = 44100,
+        sample_time = 100e-3,
     ):
         """
         Constructor de la clase.
@@ -30,16 +35,18 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             num_workers : Número de hilos trabajadores para cargar los datos.
             input_file: Ruta del archivo .wav de entrada.
             output_file: Ruta del archivo .wav de salida.
-            sample_time: Duración de la muestra en segundos
-            mu_law_compansion: Si se aplica la compansión mu-law a los datos.
+            in_rate: Tasa de muestreo de los datos de entrada.
+            sample_time: Duración de la muestra en segundos. No confundir con la duración real cada muestra,
+                        se trata de la duración de la muestra a efectos del procesamiento del modelo.
         """
         super().__init__()
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.input_file = input_file
         self.output_file = output_file
+        self.in_rate = in_rate
         self.sample_time = sample_time
-        self.mu_law_companding = mu_law_companding
+        self.sample_size = int(in_rate * sample_time)
 
         # Datos de entrenamiento, validación y test
         self.data = {}
@@ -125,7 +132,7 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         # Cargamos los ficheros .wav, nos devuelve la tasa de muestreo y los datos en formato numpy array
         in_rate, in_data = wavfile.read(self.input_file)
         out_rate, out_data = wavfile.read(self.output_file)
-        assert in_rate == 44100, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
+        assert in_rate == self.in_rate, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
         assert in_rate == out_rate, "Las tasas de muestreo de in_rate y out_rate deben ser iguales."
 
         # Si los datos no tienen la misma longitud, los truncamos
@@ -151,16 +158,15 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
             out_data = out_data.astype(np.float32) / 32767
 
         # Calculamos la longitud de la muestra y de los datos
-        sample_size = int(in_rate * self.sample_time)
-        data_length = len(in_data) - len(in_data) % sample_size
+        data_length = len(in_data) - len(in_data) % self.sample_size
 
         # Normalizamos los datos
         in_data = self.__normalize(in_data)
         out_data = self.__normalize(out_data)
 
         # Dividimos los datos de entrada y de salida en muestras de tamaño sample_size
-        x = in_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
-        y = out_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
+        x = in_data[:data_length].reshape((-1, 1, self.sample_size)).astype(np.float32)
+        y = out_data[:data_length].reshape((-1, 1, self.sample_size)).astype(np.float32)
 
         # Dividimos los datos en entrenamiento, validación y test; y los metemos en un diccionario
         self.data["x_train"], self.data["x_valid"], self.data["x_test"] = self.__split(x)
@@ -232,7 +238,6 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         Returns:
             pad_x: Datos preparados para hacer inferencia con el modelo.
         """
-
         # Comprobamos que el parámetro inference_type sea correcto
         if not isinstance(inference_type, str) and inference_type not in ['predict', 'test']:
             raise ValueError("El parámetro 'inference_type' solo puede ser 'predict' o 'test'.")
@@ -246,15 +251,15 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         if inference_type == "predict":
             # Cargamos el archivo .wav
             in_rate, in_data = wavfile.read(self.input_file)
-            assert in_rate == 44100, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
-            sample_size = int(in_rate * self.sample_time)
-            data_length = len(in_data) - len(in_data) % sample_size
-            # Dividimos los datos de entrada en muestras de tamaño sample_size
-            in_data = in_data[:data_length].reshape((-1, 1, sample_size)).astype(np.float32)
+            assert in_rate == self.in_rate, "La tasa de muestreo de los datos de entrada debe ser 44.1 kHz."
+
+            # Dividimos los datos de entrada en muestras de tamaño L = sample_size
+            data_length = len(in_data) - len(in_data) % self.sample_size
+            in_data = in_data[:data_length].reshape((-1, 1, self.sample_size)).astype(np.float32)
 
             # Estandarizamos los datos con media 0 y desviación estándar 1 
             in_data = (in_data - mean) / std
-            x = in_data
+            x = in_data 
 
         elif inference_type == "test":
             x = data["x_test"]

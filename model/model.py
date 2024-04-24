@@ -16,6 +16,9 @@ import torch.nn.functional as F
 
 import pytorch_lightning as pl
 
+import numpy as np
+from tqdm import tqdm
+
 class DilatedCausalConv1d(torch.nn.Conv1d):
     """
     Clase que implementa una capa de convolución causal dilatada.
@@ -39,11 +42,11 @@ class DilatedCausalConv1d(torch.nn.Conv1d):
             in_channels,
             out_channels,
             kernel_size,
-            stride=stride,
-            padding=self.__dilated_padding,
-            dilation=dilation,
-            groups=groups,
-            bias=bias
+            stride = stride,
+            padding = self.__dilated_padding,
+            dilation = dilation,
+            groups = groups,
+            bias = bias
         )
 
     def forward(self, input):
@@ -85,31 +88,31 @@ class WaveNet(nn.Module):
         
         # La capa de entrada es una convolución causal 1 x 1 no dilatada.
         self.input_layer = DilatedCausalConv1d(
-            in_channels=1,
-            out_channels=num_channels,
-            kernel_size=1
+            in_channels = 1,
+            out_channels = num_channels,
+            kernel_size = 1
         )
 
         # El output de la capa de entrada se pasa al bloque residual
         dilations = self.__build_dilations(dilation_depth, dilation_repeat)
         self.hidden_stack = self.__convolution_stack(
-            in_channels=num_channels,
-            out_channels= 2*num_channels,  # Se duplica la salida para usar la gated activation unit
-            kernel_size=kernel_size,
-            dilations=dilations
+            in_channels = num_channels,
+            out_channels = 2 * num_channels,  # Se duplica la salida para usar la gated activation unit
+            kernel_size = kernel_size,
+            dilations = dilations
         )
         self.residual_stack = self.__convolution_stack(
-            in_channels=num_channels,
-            out_channels=num_channels,
-            kernel_size=1,
-            dilations=dilations
+            in_channels = num_channels,
+            out_channels = num_channels,
+            kernel_size = 1,
+            dilations = dilations
         )
 
         # Las salidas "skip-connections" pasan al mixer lineal para generar la salida final
         self.linear_mixer = nn.Conv1d(
-            in_channels=num_channels*dilation_depth*dilation_repeat,   # Número de salidas de las skip-connections
-            out_channels=1,
-            kernel_size=1
+            in_channels = num_channels * dilation_depth * dilation_repeat,   # Número de salidas de las skip-connections
+            out_channels = 1,
+            kernel_size = 1
         )
 
     def __build_dilations(self, dilation_depth, dilations_repeat):
@@ -154,8 +157,8 @@ class WaveNet(nn.Module):
                 DilatedCausalConv1d(
                     in_channels,
                     out_channels,
-                    kernel_size=kernel_size,
-                    dilation=d,
+                    kernel_size = kernel_size,
+                    dilation = d,
                 )
             )     
         return pila
@@ -216,10 +219,10 @@ class AmpEmulatorModel(pl.LightningModule):
         super(AmpEmulatorModel, self).__init__()
         
         self.wavenet = WaveNet(
-            num_channels=num_channels,
-            dilation_depth=dilation_depth,
-            dilation_repeat=dilation_repeat,
-            kernel_size=kernel_size
+            num_channels = num_channels,
+            dilation_depth = dilation_depth,
+            dilation_repeat = dilation_repeat,
+            kernel_size = kernel_size
         )
         
         self.learning_rate = learning_rate
@@ -293,3 +296,28 @@ class AmpEmulatorModel(pl.LightningModule):
             optimizer (torch.optim.Adam): Optimizador Adam.
         """
         return torch.optim.Adam(self.wavenet.parameters(), lr=self.learning_rate)
+    
+    def inference(self, x, batch_size, sample_size):
+        """
+        Método que implementa la inferencia del modelo.
+
+        Args:
+            x (np.ndarray): Datos preparados para inferir por dataset.prepare_for_inference().
+            batch_size (int): Tamaño del lote de datos.
+            shape (int): Tamaño de las señales de audio. Por defecto 4410.
+        Returns:
+            y_hat (np.ndarray): Datos inferidos por el modelo.
+        """
+        with torch.no_grad():
+            y_hat = []
+            batches = x.shape[0] // batch_size
+
+            # Inferencia por lotes con barras de progreso
+            for batch in tqdm(np.array_split(x, batches)):
+                inference = self(torch.from_numpy(batch)).numpy()
+                y_hat.append(inference)
+
+        y_hat = np.concatenate(y_hat)
+        y_hat = y_hat[:, :, -sample_size :]
+
+        return y_hat

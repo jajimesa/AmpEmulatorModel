@@ -12,7 +12,6 @@ Red neuronal basada en la arquitectura de red neuronal propuesta en
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 import pytorch_lightning as pl
 
@@ -246,9 +245,9 @@ class AmpEmulatorModel(pl.LightningModule):
         """
         return torch.cat([x[:, :, 0:1], x[:, :, 1:] - alpha * x[:, :, :-1]], dim=2)
 
-    def __ESR(self, y, y_hat):
+    def __error_to_signal_ratio(self, y, y_hat):
         """
-        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio).
+        Método que implementa la función de pérdida ESR (Error-to-Signal Ratio) sobre tensores.
         
         Args:
             y (torch.Tensor): Tensor con las señales de audio originales.
@@ -258,9 +257,13 @@ class AmpEmulatorModel(pl.LightningModule):
             ESR (torch.Tensor): Tensor con el valor de la función de pérdida ESR.
         """
         y, y_hat = self.__pre_emphasis_filter(y), self.__pre_emphasis_filter(y_hat)
-        return torch.sum(torch.pow(y - y_hat, 2), dim=2) / torch.sum(torch.pow(y, 2), dim=2)
 
-        # Métodos overriden de Lightning.LightningModule
+        # ¡Añadimos un pequeño valor para evitar la división por cero!
+        return torch.sum(torch.pow(y - y_hat, 2), dim=2) / (torch.sum(torch.pow(y, 2), dim=2) + 1e-10) 
+
+
+
+    # Métodos overriden de Lightning.LightningModule
 
     def training_step(self, batch):
         """
@@ -271,7 +274,7 @@ class AmpEmulatorModel(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        loss = self.__ESR(y[:, :, -y_hat.size(2) :], y_hat).mean()
+        loss = self.__error_to_signal_ratio(y[:, :, -y_hat.size(2) :], y_hat).mean()
         self.log('train_loss', loss)
         return loss
         
@@ -284,7 +287,7 @@ class AmpEmulatorModel(pl.LightningModule):
         """
         x, y = batch
         y_hat = self.forward(x)
-        loss = self.__ESR(y[:, :, -y_hat.size(2) :], y_hat).mean()
+        loss = self.__error_to_signal_ratio(y[:, :, -y_hat.size(2) :], y_hat).mean()
         self.log('val_loss', loss)
         return loss
     

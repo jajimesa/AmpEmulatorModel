@@ -209,10 +209,11 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         """
         return DataLoader(
             dataset = self.__valid_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=True,    # Mantiene la pool de hilos
-            shuffle=False)
+            batch_size = self.batch_size,
+            num_workers = self.num_workers,
+            persistent_workers = True,    # Mantiene la pool de hilos
+            shuffle = False
+            )
     
     def test_dataloader(self):
         """
@@ -223,10 +224,11 @@ class AmpEmulatorDataModule(pl.LightningDataModule):
         """
         return DataLoader(
             dataset = self.__test_ds,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            persistent_workers=True,    # Mantiene la pool de hilos
-            shuffle=False)
+            batch_size = self.batch_size,
+            num_workers = self.num_workers,
+            persistent_workers = True,    # Mantiene la pool de hilos
+            shuffle = False
+            )
     
     def prepare_for_inference(self, inference_type="predict"):
         """

@@ -46,6 +46,7 @@ def convert(args):
     )  # Pytorch uses (out_channels, in_channels, kernel_size), TensorFlow uses (kernel_size, in_channels, out_channels)
     #model = PedalNet.load_from_checkpoint(checkpoint_path=args.model)
     model = AmpEmulatorModel.load_from_checkpoint(checkpoint_path=args.model)
+    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
 
     sd = model.state_dict()
 
@@ -56,7 +57,9 @@ def convert(args):
     #filter_width = hparams.kernel_size
     filter_width = 3
     #dilations = [2 ** d for d in range(hparams.dilation_depth)] * hparams.num_repeat
-    dilations = [2 ** d for d in range(9)] * 2
+    dilation_depth = 9
+    dilation_repeat = 2
+    dilations = [2 ** d for d in range(dilation_depth)] * dilation_repeat
 
     data_out = {
         "activation": "gated",

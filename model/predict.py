@@ -1,5 +1,3 @@
-import torch
-
 from scipy.io import wavfile
 
 from model import AmpEmulatorModel
@@ -18,7 +16,8 @@ def predict():
     sample_size = dataset.sample_size
 
     # Hacemos la inferencia
-    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt")
+    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt") # Tipo WaveNet2
+    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
     model.eval()
     pred = model.inference(x, batch_size, sample_size)
 

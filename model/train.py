@@ -16,8 +16,9 @@ def train():
     dataset.setup()
     dataset.prepare_data()
 
-    # Cargamos el modelo
-    model = AmpEmulatorModel()
+    # Creamos el modelo
+    model = AmpEmulatorModel() # Tipo WaveNet2
+    #model = AmpEmulatorModel(4, 10, 1, 3, 3e-3)
 
     # Entrenamos el modelo
     model.train()           # Ponemos el modelo en modo de entrenamiento (REDUNDANTE, ya lo hace el Trainer)
@@ -30,11 +31,11 @@ def train():
     # Para empezar desde cero el entrenamiento
     trainer.fit(model, dataset.train_dataloader(), dataset.val_dataloader())
 
-    # Para cargar el checkpoint
+    # Para cargar un checkpoint
     #trainer.fit(model, dataset.train_dataloader(), dataset.val_dataloader(), ckpt_path="models/model.ckpt")
 
     # Guardamos el modelo
-    trainer.save_checkpoint("models/model2.ckpt")
+    trainer.save_checkpoint("models/model.ckpt")
 
 if __name__ == "__main__":
     train()

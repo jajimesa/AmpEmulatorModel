@@ -213,7 +213,18 @@ class AmpEmulatorModel(pl.LightningModule):
     
     def __init__(self, num_channels=4, dilation_depth=9, dilation_repeat=2, kernel_size=3, learning_rate=3e-3):
         """
-        Constructor de la clase.
+        Constructor de la clase. Los argumentos por defecto se corresponden con WaveNet2:
+
+        ====================================================
+        | Model           | WaveNet1 | WaveNet2 | WaveNet3 |
+        |-----------------|----------|----------|----------|
+        | Layers          | 10       | 18       | 18       |
+        | Channels        | 16       | 8        | 16       |
+        |-----------------|----------|----------|----------|
+        | num_channels    | 8        | 4        | 8        |
+        | dilation_depth  | 10       | 9        | 9        |
+        | dilation_repeat | 1        | 2        | 2        |
+        ====================================================
         """
         super(AmpEmulatorModel, self).__init__()
         

@@ -1,4 +1,5 @@
 from scipy.io import wavfile
+from scipy import signal
 import numpy as np
 import matplotlib.pyplot as plt
 from model import AmpEmulatorModel
@@ -24,7 +25,8 @@ def test():
     y_test = dataset.data["y_test"]
 
     # Hacemos la inferencia
-    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt")
+    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt") # Tipo WaveNet2
+    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
     model.eval()
     y_hat = model.inference(x, batch_size, sample_size)
 
@@ -92,15 +94,25 @@ def plot():
     axes[0].plot(np.arange(start_index, end_index) / sample_rate, y_test[start_index:end_index], label="Señal real")
     axes[0].plot(np.arange(start_index, end_index) / sample_rate, y_hat[start_index:end_index], label="Señal predicha")
     axes[0].legend()
-    axes[0].set_title("Comparación de señales (Zoom)", fontsize=16, fontname='sans-serif')
+    axes[0].set_title("Comparación de señales (ESR = {:.4f})".format(error_signal_ratio), fontsize=16, fontname='sans-serif')
     axes[0].set_ylabel("Amplitud", fontsize=12, fontname='sans-serif')
     axes[0].set_xlabel("Tiempo [s]", fontsize=12, fontname='sans-serif')
+    axes[0].grid(True, linewidth=.8)
+    axes[0].spines['bottom'].set_linewidth(1.2)  # Ajusta el grosor del eje x
+    axes[0].spines['left'].set_linewidth(1.2)  # Ajusta el grosor del eje y
+    axes[0].spines['top'].set_linewidth(1.2)
+    axes[0].spines['right'].set_linewidth(1.2)
 
     # Plot del error absoluto a lo largo del tiempo con zoom
     axes[1].plot(np.arange(start_index, end_index) / sample_rate, abs_error[start_index:end_index], color="red")
-    axes[1].set_title("Error absoluto (Zoom)", fontsize=16, fontname='sans-serif')
+    axes[1].set_title("Error absoluto (zoom)", fontsize=16, fontname='sans-serif')
     axes[1].set_xlabel("Tiempo [s]", fontsize=12, fontname='sans-serif')
     axes[1].set_ylabel("Error absoluto", fontsize=12, fontname='sans-serif')
+    axes[1].grid(True, linewidth=.8)
+    axes[1].spines['bottom'].set_linewidth(1.2)  # Ajusta el grosor del eje x
+    axes[1].spines['left'].set_linewidth(1.2)  # Ajusta el grosor del eje y
+    axes[1].spines['top'].set_linewidth(1.2)
+    axes[1].spines['right'].set_linewidth(1.2)
 
     plt.tight_layout()
     plt.savefig("tests/comparacion_señales_error_zoom.pdf")
@@ -108,13 +120,16 @@ def plot():
 
     # Plot del espectrograma del error entre la señal predicha y la señal real
     plt.figure(figsize=(8, 6))
-    _, _, _, spectrogram = plt.specgram(y_hat - y_test, Fs=44100, cmap='viridis', scale='dB')
+    frequencies, times, spectrogram = signal.spectrogram(y_hat - y_test, 44100)
+    plt.pcolormesh(times, frequencies, 10 * np.log10(spectrogram + 1e-10), shading='auto', cmap='inferno')
+    cbar = plt.colorbar(label='Potencia [dB]')
+    cbar.ax.yaxis.set_label_position('left')
+    cbar.ax.yaxis.label.set_fontname('sans-serif')
     plt.title("Espectrograma del error", fontsize=16, fontname='sans-serif')
     plt.xlabel("Tiempo [s]", fontsize=12, fontname='sans-serif')
     plt.ylabel("Frecuencia [Hz]", fontsize=12, fontname='sans-serif')
-    plt.colorbar()
     plt.tight_layout()
-    plt.savefig("tests/espectrograma_error.pdf")
+    plt.savefig("tests/espectrograma_error.png")
     plt.show()
 
 if __name__ == "__main__":

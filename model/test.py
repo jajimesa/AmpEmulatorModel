@@ -121,7 +121,7 @@ def plot():
     # Plot del espectrograma del error entre la señal predicha y la señal real
     plt.figure(figsize=(8, 6))
     frequencies, times, spectrogram = signal.spectrogram(y_hat - y_test, 44100)
-    plt.pcolormesh(times, frequencies, 10 * np.log10(spectrogram + 1e-10), shading='auto', cmap='inferno')
+    plt.pcolormesh(times, frequencies, 10 * np.log10(spectrogram + 1e-10), shading='auto', cmap='viridis')
     cbar = plt.colorbar(label='Potencia [dB]')
     cbar.ax.yaxis.set_label_position('left')
     cbar.ax.yaxis.label.set_fontname('sans-serif')

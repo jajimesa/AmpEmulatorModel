@@ -1,0 +1,17 @@
+*.pdf
+*.ckpt
+*.wav
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.venv/
+lightning_logs/
+*.log
+.pytest_cache/
+.hypothesis/
+*.egg-info/
+dist/
+build/

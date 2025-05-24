@@ -1,6 +1,6 @@
 # AmpEmulatorModel
 
-Este proyecto académico contiene la implementación de un modelo de inteligencia artificial en Python, desarrollado con PyTorch y PyTorch Lightning, cuya arquitectura está basada en WaveNet [1,2]. Su propósito es la emulación precisa de equipos analógicos de guitarra eléctrica, tales como amplificadores a válvulas y pedales de efectos como overdrive, distorsión y compresión. Para su uso en un contexto de plugin, se recomienda usar AmpEmulatorPlugin, aunque el formato de salida es compatible con otros plugins desarrollados por la comunidad [4,5].
+Este proyecto académico contiene la implementación de un modelo de inteligencia artificial en Python, desarrollado con PyTorch y PyTorch Lightning, cuya arquitectura está basada en WaveNet [1,2]. Su propósito es la emulación precisa de equipos analógicos de guitarra eléctrica, tales como amplificadores a válvulas y pedales de efectos como *overdrive*, distorsión y compresión. Para su uso en un contexto de plugin, se recomienda usar AmpEmulatorPlugin, aunque el formato de salida es compatible con otros plugins desarrollados por la comunidad [4,5].
 > El sistema está diseñado para modelar dispositivos que no introduzcan dependencias temporales en la señal [2], es decir, que su comportamiento pueda considerarse instantáneo respecto al contexto temporal de la señal de entrada.
 
 #### Créditos

@@ -32,10 +32,10 @@ def train():
     trainer.fit(model, dataset.train_dataloader(), dataset.val_dataloader())
 
     # Para cargar un checkpoint
-    #trainer.fit(model, dataset.train_dataloader(), dataset.val_dataloader(), ckpt_path="models/model.ckpt")
+    #trainer.fit(model, dataset.train_dataloader(), dataset.val_dataloader(), ckpt_path="results/model.ckpt")
 
     # Guardamos el modelo
-    trainer.save_checkpoint("models/model.ckpt")
+    trainer.save_checkpoint("results/model.ckpt")
 
 if __name__ == "__main__":
     train()

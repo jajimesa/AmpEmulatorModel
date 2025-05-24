@@ -16,13 +16,13 @@ def predict():
     sample_size = dataset.sample_size
 
     # Hacemos la inferencia
-    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt") # Tipo WaveNet2
-    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
+    model = AmpEmulatorModel.load_from_checkpoint("results/model.ckpt") # Tipo WaveNet2
+    #model = AmpEmulatorModel.load_from_checkpoint("results/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
     model.eval()
     pred = model.inference(x, batch_size, sample_size)
 
     # Guardamos la predicción como un .wav
-    wavfile.write("models/pred.wav", 44100, pred)
+    wavfile.write("results/pred.wav", 44100, pred)
 
 if __name__ == "__main__":
     predict()

@@ -46,7 +46,7 @@ def convert(args):
     )  # Pytorch uses (out_channels, in_channels, kernel_size), TensorFlow uses (kernel_size, in_channels, out_channels)
     #model = PedalNet.load_from_checkpoint(checkpoint_path=args.model)
     model = AmpEmulatorModel.load_from_checkpoint(checkpoint_path=args.model)
-    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
+    #model = AmpEmulatorModel.load_from_checkpoint("results/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
 
     sd = model.state_dict()
 
@@ -165,7 +165,7 @@ def convert(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="models/model.ckpt")
+    parser.add_argument("--model", default="results/model.ckpt")
     parser.add_argument("--format", default="json")
     args = parser.parse_args()
     convert(args)

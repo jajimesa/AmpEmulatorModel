@@ -25,8 +25,8 @@ def test():
     y_test = dataset.data["y_test"]
 
     # Hacemos la inferencia
-    model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt") # Tipo WaveNet2
-    #model = AmpEmulatorModel.load_from_checkpoint("models/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
+    model = AmpEmulatorModel.load_from_checkpoint("results/model.ckpt") # Tipo WaveNet2
+    #model = AmpEmulatorModel.load_from_checkpoint("results/model.ckpt", num_channels=4, dilation_depth=10, dilation_repeat=1, kernel_size=3, lr=3e-3)
     model.eval()
     y_hat = model.inference(x, batch_size, sample_size)
 
@@ -130,6 +130,66 @@ def plot():
     plt.ylabel("Frecuencia [Hz]", fontsize=12, fontname='sans-serif')
     plt.tight_layout()
     plt.savefig("tests/espectrograma_error.png")
+    plt.show()
+
+    # FFT de ambas señales
+    freqs = np.fft.rfftfreq(len(y_test), 1 / sample_rate)
+    Y_test = np.abs(np.fft.rfft(y_test))
+    Y_hat = np.abs(np.fft.rfft(y_hat))
+    Y_error = np.abs(Y_test - Y_hat)
+
+    # Espectros de magnitud
+    plt.figure(figsize=(10, 6))
+    plt.plot(freqs, 20 * np.log10(Y_test + 1e-10), label="Señal real", alpha=0.7)
+    plt.plot(freqs, 20 * np.log10(Y_hat + 1e-10), label="Señal predicha", alpha=0.7)
+    plt.xscale("log")
+    plt.xlabel("Frecuencia [Hz]")
+    plt.ylabel("Magnitud [dB]")
+    plt.title("Comparación de espectros de magnitud")
+    plt.legend()
+    plt.grid()
+    plt.savefig("tests/comparacion_espectros.pdf")
+    plt.show()
+
+    # Energía del error a lo largo del tiempo
+    window_size = sample_rate // 10  # 100 ms
+    energy_error = [
+        np.sum((y_hat[i : i + window_size] - y_test[i : i + window_size]) ** 2)
+        for i in range(0, len(y_test), window_size)
+    ]
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(np.arange(len(energy_error)) * (window_size / sample_rate), energy_error, color="red")
+    plt.xlabel("Tiempo [s]")
+    plt.ylabel("Energía del error")
+    plt.title("Evolución temporal de la energía del error")
+    plt.grid()
+    plt.savefig("tests/energia_error.pdf")
+    plt.show()
+
+    # Correlación cruzada entre señal real y predicha
+    max_index = np.argmax(np.abs(y_test))
+    sample_rate = 44100
+    zoom_duration = 0.01  # segundos (10 ms)
+    zoom_samples = int(sample_rate * zoom_duration)
+    start_index = max(0, max_index - zoom_samples // 2)
+    end_index = min(len(y_test), max_index + zoom_samples // 2)
+    if start_index < end_index:
+        y_test_zoom = y_test[start_index:end_index]
+        y_hat_zoom = y_hat[start_index:end_index]
+    else:
+        raise ValueError("Los índices start_index y end_index no son válidos.")
+    corr = np.correlate(y_test_zoom, y_hat_zoom, mode="full")
+    lags = np.arange(-len(y_hat_zoom) + 1, len(y_test_zoom))
+    corr /= np.max(np.abs(corr))
+    plt.figure(figsize=(8, 6))
+    plt.plot(lags / sample_rate * 1000, corr, color="darkred")  # Convertimos lags a milisegundos
+    plt.xlabel("Desfase [ms]")
+    plt.ylabel("Correlación cruzada normalizada")
+    plt.title("Correlación cruzada (zoom)")
+    plt.axvline(0, color="black", linestyle="dashed")  # Línea en desfase = 0
+    plt.grid()
+    plt.savefig("tests/correlacion_cruzada_zoom.pdf")
     plt.show()
 
 if __name__ == "__main__":

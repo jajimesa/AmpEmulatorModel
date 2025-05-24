@@ -1,6 +1,3 @@
-*.pdf
-*.ckpt
-*.wav
 __pycache__/
 *.pyc
 *.pyo

@@ -1,7 +1,11 @@
 # AmpEmulatorModel
 
-Este repositorio contiene la implementación de un modelo de inteligencia artificial en Python, desarrollado con PyTorch y PyTorch Lightning, cuya arquitectura está basada en WaveNet. Su propósito es la emulación precisa de equipos analógicos de guitarra eléctrica, tales como amplificadores a válvulas y pedales de efectos como overdrive, distorsión y compresión. 
-> El sistema está diseñado para modelar dispositivos que no introduzcan dependencias temporales en la señal, es decir, que su comportamiento pueda considerarse instantáneo respecto al contexto temporal de la señal de entrada.
+Este repositorio contiene la implementación de un modelo de inteligencia artificial en Python, desarrollado con PyTorch y PyTorch Lightning, cuya arquitectura está basada en WaveNet [1,2]. Su propósito es la emulación precisa de equipos analógicos de guitarra eléctrica, tales como amplificadores a válvulas y pedales de efectos como overdrive, distorsión y compresión. Para su uso en un contexto de plugin, se recomienda usar AmpEmulatorPlugin, aunque el formato de salida es compatible con otros plugins desarrollados por la comunidad [4,5].
+> El sistema está diseñado para modelar dispositivos que no introduzcan dependencias temporales en la señal [2], es decir, que su comportamiento pueda considerarse instantáneo respecto al contexto temporal de la señal de entrada.
+
+#### Créditos
+Desarrollado originalmente como parte de mi [Trabajo Fin de Grado](https://zenodo.org/records/15490785) para la titulación de Ingeniería Informática de la Universidad de La Rioja (España), titulado *Aprendizaje profundo para la emulación en tiempo real de equipamiento de guitarra eléctrica con Raspberry Pi 5*. Basado conceptualmente en el repositorio [PedalNetRT](https://github.com/GuitarML/PedalNetRT), de Keith Bloemer [3]. Agradezco mucho sus contribuciones a la comunidad, gracias a las cuales no solo he aprendido mucho, sino que he podido testear mi proyecto empleando sus plugins [4].
+
 ## Estructura del repositorio
 
 ### Carpeta `model/`
@@ -75,12 +79,12 @@ Si queremos escuchar el resultado de la inferencia procesando el fichero `input.
 #### Exportación como `model.json`
 Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en WaveNetVA, PedalNetRT o AmpEmulatorPlugin en tiempo real.
 
-# Referencias
-El proyecto está basado en
+## Referencias
+[1]	Wright, A. et al.: "Real-Time Guitar Amplifier Emulation with Deep Learning". *Applied Sciences* (2020). (https://doi.org/10.3390/app10030766)   
+[2]	Van den Oord, A. et al.: "WaveNet: A Generative Model for Raw Audio". *arXiv* (2016). (https://doi.org/10.48550/arXiv.1609.03499)   
+[3]	Bloemer, K.: PedalNetRT, GitHub (https://github.com/GuitarML/PedalNetRT). (2020).   
+[4]	Damskägg, E.-P.: WaveNetVA, GitHub (https://github.com/damskaggep/WaveNetVA). (2019).   
+[5]	Bloemer, K.: SmartPluginAmp, Github (https://github.com/GuitarML/SmartGuitarAmp). (2020).
 
-- [1] Wright et al., Real-Time Guitar Amplifier Emulation with Deep Learning (2020)
-- [2] Open-source work by GuitarML and others on black-box modeling of analog equipment
-- [3] TFG
-
-Autor: Javier Jiménez Santana
-Tutores: Jose Divasón Mallagaray, Silvano Nájera Canal
+Autor: *Javier Jiménez Santana*   
+Tutores: *Jose Divasón Mallagaray, Silvano Nájera Canal*

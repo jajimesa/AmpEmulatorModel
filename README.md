@@ -46,7 +46,7 @@ El modelo solo requiere aproximadamente de 3 minutos de audio para lograr result
 - Graba aproximadamente 3 minutos de audio en formato `.wav` de tu guitarra eléctrica en un canal limpio, empleando el mayor número de técnicas posible y explorando todo el registro tonal de la guitarra. Para mejores resultados, emplea una sola 	pastilla de la guitarra y no toques los potenciómetros de volumen ni tono. Llama a este fichero `input.wav` y guárdalo en `model/data`. Si no quieres grabar tu propio dataset desde cero, puedes emplear el fichero llamado `input.wav` que se encuentra por defecto en `model/data`.
 - Procesa el fichero `input.wav` mediante el amplificador o pedal que quieras emular, y guárdalo en formato `.wav` con el nombre `output.wav`. Si quieres modelar un dispositivo real, se recomienda conectar la salida de la interfaz de audio del ordenador al amplificador o pedal, y recoger su salida a través de la entrada de la interfaz. Entonces, reproducir el fichero `input.wav` y grabar el resultado.
 
-<img src="data-config.png" width="250" height="336">
+<img src="data-config.png" width="334" height="448">
 
 > Los archivos WAV utilizados en el dataset deben cumplir con las siguientes especificaciones:
 > - **Formato**: WAV.
@@ -67,6 +67,10 @@ Invocamos a las utilidades de testing mediante el script `model/test.py`, cuyo o
 python model/test.py
 ```
 Si queremos escuchar el resultado de la inferencia procesando el fichero `input.wav` al completo, podemos usar `model/predict.py` y comparar nosotros mismos con el sonido objetivo de `data/output.wav`. El archivo resultante se almacena en `model/results`.
+
+<img src="test-example.png" width="575" height="142">
+
+> Comparación entre la señal real y la predicha, para un amplificador de sonido limpio. Se logra un error minúsculo, del 0,74%.
 
 #### Exportación como `model.json`
 Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en WaveNetVA, PedalNetRT o AmpEmulatorPlugin en tiempo real.

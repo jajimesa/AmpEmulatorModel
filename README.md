@@ -75,7 +75,7 @@ Si queremos escuchar el resultado de la inferencia procesando el fichero `input.
 <img src="test-example-1.png" width="575" height="142">
 <img src="test-example-2.png" width="575" height="142">	
 
-> Comparación entre la señal real y la predicha, con dos gráficos diferentes, para un pedal *fuzz face* y im amplificador de sonido limpio, respectivamente. Se logra un error minúsculo, del 0,74%.
+> Comparación entre la señal real y la predicha, con dos gráficos diferentes, para unos pedales *fuzz face* y *klon centaur*, respectivamente. Se logran erroes minúsculos, del 0,74% y 0.80%.
 
 #### Exportación como `model.json`
 Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en WaveNetVA, PedalNetRT o AmpEmulatorPlugin en tiempo real.

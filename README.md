@@ -86,7 +86,7 @@ Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizad
 [3]	Van den Oord, A. et al.: "WaveNet: A Generative Model for Raw Audio". *arXiv* (2016). [DOI](https://doi.org/10.48550/arXiv.1609.03499)   
 [4]	Bloemer, K.: PedalNetRT, [GitHub](https://github.com/GuitarML/PedalNetRT). (2020).   
 [5]	Damskägg, E.-P.: WaveNetVA, [GitHub](https://github.com/damskaggep/WaveNetVA). (2019).   
-[6]	Bloemer, K.: SmartPluginAmp, [Github](https://github.com/GuitarML/SmartGuitarAmp). (2020).
+[6]	Bloemer, K.: SmartPluginAmp, [GitHub](https://github.com/GuitarML/SmartGuitarAmp). (2020).
 
 Autor: *Javier Jiménez Santana*   
 Tutores: *Jose Divasón Mallagaray, Silvano Nájera Canal*

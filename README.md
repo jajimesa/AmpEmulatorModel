@@ -81,12 +81,12 @@ Si queremos escuchar el resultado de la inferencia procesando el fichero `input.
 Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en WaveNetVA, PedalNetRT o AmpEmulatorPlugin en tiempo real.
 
 ## Referencias
-[1] 	Jiménez Santana, J.: "Aprendizaje profundo para la emulación en tiempo real de equipamiento de guitarra eléctrica con Raspberry Pi 5". *Zenodo* (2025). (https://doi.org/10.5281/zenodo.15490785)   
-[2]	Wright, A. et al.: "Real-Time Guitar Amplifier Emulation with Deep Learning". *Applied Sciences* (2020). (https://doi.org/10.3390/app10030766)   
-[3]	Van den Oord, A. et al.: "WaveNet: A Generative Model for Raw Audio". *arXiv* (2016). (https://doi.org/10.48550/arXiv.1609.03499)   
-[4]	Bloemer, K.: PedalNetRT, GitHub (https://github.com/GuitarML/PedalNetRT). (2020).   
-[5]	Damskägg, E.-P.: WaveNetVA, GitHub (https://github.com/damskaggep/WaveNetVA). (2019).   
-[6]	Bloemer, K.: SmartPluginAmp, Github (https://github.com/GuitarML/SmartGuitarAmp). (2020).
+[1] 	Jiménez Santana, J.: "Aprendizaje profundo para la emulación en tiempo real de equipamiento de guitarra eléctrica con Raspberry Pi 5". *Zenodo* (2025). [DOI](https://doi.org/10.5281/zenodo.15490785)   
+[2]	Wright, A. et al.: "Real-Time Guitar Amplifier Emulation with Deep Learning". *Applied Sciences* (2020). [DOI](https://doi.org/10.3390/app10030766)   
+[3]	Van den Oord, A. et al.: "WaveNet: A Generative Model for Raw Audio". *arXiv* (2016). [DOI](https://doi.org/10.48550/arXiv.1609.03499)   
+[4]	Bloemer, K.: PedalNetRT, [GitHub](https://github.com/GuitarML/PedalNetRT). (2020).   
+[5]	Damskägg, E.-P.: WaveNetVA, [GitHub](https://github.com/damskaggep/WaveNetVA). (2019).   
+[6]	Bloemer, K.: SmartPluginAmp, [Github](https://github.com/GuitarML/SmartGuitarAmp). (2020).
 
 Autor: *Javier Jiménez Santana*   
 Tutores: *Jose Divasón Mallagaray, Silvano Nájera Canal*

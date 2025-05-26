@@ -1,4 +1,4 @@
-# AmpEmulatorModel [(🇪🇸)](README.md)
+# AmpEmulatorModel [(🇪🇸)](README_es.md)
 
 This academic project [1] contains the implementation of an artificial intelligence model in Python, developed with PyTorch and PyTorch Lightning, with an architecture based on WaveNet [2,3]. Its purpose is the accurate emulation of analog electric guitar equipment, such as tube amplifiers and effect pedals like *overdrive*, distortion, and compression. For use in a plugin context, it is recommended to use [AmpEmulatorPlugin](https://github.com/jajimesa/AmpEmulatorPlugin), although the export format (`.json`) is compatible with other community-developed plugins [5,6].
 

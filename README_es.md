@@ -52,14 +52,14 @@ El modelo solo requiere aproximadamente de 3 minutos de audio para lograr result
 
 <img src="data-config.png" width="334" height="448">
 
-> Los archivos WAV utilizados en el dataset deben cumplir con las siguientes especificaciones:
+> Los archivos `.wav` utilizados en el dataset deben cumplir con las siguientes especificaciones:
 > - **Formato**: WAV.
 > - **Frecuencia de muestreo**: 44.1 kHz.
 > - **Profundidad de bits**: 32-bit FP (punto flotante).
 > - **Canales**: Mono.
 > - **Duración**: Aproximadamente 3 minutos.
 >   
-> Asegúrate de que los archivos WAV cumplan con estas especificaciones para garantizar la compatibilidad con el modelo de emulación. La imagen muestra cómo lograr esta configuración empleando el DAW [Reaper](https://www.reaper.fm/).
+> Asegúrate de que los archivos `.wav` cumplan con estas especificaciones para garantizar la compatibilidad con el modelo de emulación. La imagen muestra cómo lograr esta configuración empleando el DAW [Reaper](https://www.reaper.fm/).
 
 #### Entrenamiento del `model.ckpt`
 Ejecutamos el script `model/train.py`

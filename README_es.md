@@ -1,4 +1,4 @@
-# AmpEmulatorModel
+# AmpEmulatorModel (🇪🇸)
 
 Este proyecto académico, [1], contiene la implementación de un modelo de inteligencia artificial en Python, desarrollado con PyTorch y PyTorch Lightning, cuya arquitectura está basada en WaveNet [2,3]. Su propósito es la emulación precisa de equipos analógicos de guitarra eléctrica, tales como amplificadores a válvulas y pedales de efectos como *overdrive*, distorsión y compresión. Para su uso en un contexto de plugin, se recomienda usar [AmpEmulatorPlugin](https://github.com/jajimesa/AmpEmulatorPlugin), aunque el formato de exportación (`.json`) es compatible con otros plugins desarrollados por la comunidad [5,6].
 > El sistema está diseñado para modelar dispositivos que no introduzcan dependencias temporales en la señal [3], es decir, que su comportamiento pueda considerarse instantáneo respecto al contexto temporal de la señal de entrada. Con un buen dataset y una buena elección del dispositivo a modelar, se puede llegar a obtener errores de tan solo el 0.74%, aunque normalmente el intervalo va del 1-5% de Error-to-Signal-Ratio (ESR) [1].
@@ -58,7 +58,8 @@ El modelo solo requiere aproximadamente de 3 minutos de audio para lograr result
 > - **Profundidad de bits**: 32-bit FP (punto flotante).
 > - **Canales**: Mono.
 > - **Duración**: Aproximadamente 3 minutos.
->  Asegúrate de que los archivos WAV cumplan con estas especificaciones para garantizar la compatibilidad con el modelo de emulación. La imagen muestra cómo lograr esta configuración empleando el DAW [Reaper](https://www.reaper.fm/).
+>   
+> Asegúrate de que los archivos WAV cumplan con estas especificaciones para garantizar la compatibilidad con el modelo de emulación. La imagen muestra cómo lograr esta configuración empleando el DAW [Reaper](https://www.reaper.fm/).
 
 #### Entrenamiento del `model.ckpt`
 Ejecutamos el script `model/train.py`
@@ -70,7 +71,7 @@ Invocamos a las utilidades de testing mediante el script `model/test.py`, cuyo o
 ```bash
 python model/test.py
 ```
-Si queremos escuchar el resultado de la inferencia procesando el fichero `input.wav` al completo, podemos usar `model/predict.py` y comparar nosotros mismos con el sonido objetivo de `data/output.wav`. El archivo resultante se almacena en `model/results`.
+Si queremos escuchar el resultado de la inferencia procesando el fichero `data/input.wav` al completo, podemos usar `model/predict.py` y comparar nosotros mismos con el sonido objetivo de `data/output.wav`. El archivo resultante se almacena en `model/results`.
 
 <img src="test-example-1.png" width="575" height="142">
 <img src="test-example-2.png" width="575" height="142">	
@@ -78,7 +79,7 @@ Si queremos escuchar el resultado de la inferencia procesando el fichero `input.
 > Comparación entre la señal real y la predicha, con dos gráficos diferentes, para unos pedales *fuzz face* y *klon centaur*, respectivamente. Se logran erroes minúsculos, del 0,74% y 0.80%.
 
 #### Exportación como `model.json`
-Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en WaveNetVA, PedalNetRT o AmpEmulatorPlugin en tiempo real.
+Podemos exportar el modelo resultante a formato `.json`, para poder ser utilizado en [AmpEmulatorPlugin](https://github.com/jajimesa/AmpEmulatorPlugin), [WaveNetVA](https://github.com/damskaggep/WaveNetVA) o [PedalNetRT](https://github.com/GuitarML/PedalNetRT) en tiempo real.
 
 ## Referencias
 [1] 	Jiménez Santana, J.: "Aprendizaje profundo para la emulación en tiempo real de equipamiento de guitarra eléctrica con Raspberry Pi 5". *Zenodo* (2025). [DOI](https://doi.org/10.5281/zenodo.15490785)   

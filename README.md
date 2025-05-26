@@ -49,20 +49,20 @@ Creating a new profile with the model involves three steps: preparing the `datas
 #### Preparing the `dataset`
 The model only requires approximately 3 minutes of audio to achieve high-fidelity results. The dataset consists of two files, `input.wav` and `output.wav`, both of the same duration. The first is a clean recording of your guitar, and the second is the same recording processed through the amplifier or pedal you want to emulate.
 
-- Record approximately 3 minutes of audio in .wav format of your electric guitar through a clean channel, using as many techniques as possible and exploring the full tonal range of the guitar. For best results, use a single pickup and avoid adjusting the volume or tone knobs. Name this file input.wav and save it in model/data. If you don’t want to record your own dataset from scratch, you can use the default input.wav file located in model/data.
+- Record approximately 3 minutes of audio in `.wav` format of your electric guitar through a clean channel, using as many techniques as possible and exploring the full tonal range of the guitar. For best results, use a single pickup and avoid adjusting the volume or tone knobs. Name this file `input.wav` and save it in `model/data`. If you don’t want to record your own dataset from scratch, you can use the default `input.wav` file located in `model/data`.
 
-- Process the input.wav file through the amplifier or pedal you wish to emulate, and save it in .wav format as output.wav. If modeling a real device, it is recommended to connect the output of your computer’s audio interface to the amplifier or pedal, and capture its output through the interface’s input. Then, play the input.wav file and record the result.
+- Process the `input.wav` file through the amplifier or pedal you wish to emulate, and save it in `.wav` format as output.wav. If modeling a real device, it is recommended to connect the output of your computer’s audio interface to the amplifier or pedal, and capture its output through the interface’s input. Then, play the `input.wav` file and record the result.
 
 <img src="data-config.png" width="334" height="448">
 
-> The WAV files used in the dataset must meet the following specifications:   
+> The `.wav` files used in the dataset must meet the following specifications:   
 > - **Format**: WAV.   
 > - **Sample Rate**: 44.1 kHz.   
 > - **Bit Depth**: 32-bit FP (floating point).   
 > - **Channels**: Mono.   
 > - **Duration**: Approximately 3 minutes.
 >   
-> Ensure that your WAV files meet these specifications to guarantee compatibility with the emulation model. The image shows how to achieve this configuration using the DAW [Reaper](https://www.reaper.fm/).
+> Ensure that your `.wav` files meet these specifications to guarantee compatibility with the emulation model. The image shows how to achieve this configuration using the DAW [Reaper](https://www.reaper.fm/).
 
 #### Training the `model.ckpt`
 Run the `model/train.py` script:
